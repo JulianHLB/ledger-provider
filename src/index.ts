@@ -1,34 +1,35 @@
-import Web3ProviderEngine from 'web3-provider-engine';
-// @ts-ignore
-import CacheSubprovider from 'web3-provider-engine/subproviders/cache.js';
-import { ledgerEthereumBrowserClientFactoryAsync } from '@0x/subproviders/lib/src';
-import { LedgerSubprovider } from '@0x/subproviders/lib/src/subproviders/ledger';
-import { RPCSubprovider } from '@0x/subproviders/lib/src/subproviders/rpc_subprovider';
+import {
+  Web3ProviderEngine,
+  LedgerSubprovider,
+  RPCSubprovider,
+} from '@0x/subproviders';
+import Eth from '@ledgerhq/hw-app-eth';
+import TransportWebHID from '@ledgerhq/hw-transport-webhid';
 
 export interface ILedgerProviderOptions {
   chainId: number;
   rpcUrl: string;
-  accountFetchingConfigs?: any;
-  baseDerivationPath?: any;
-  pollingInterval?: any;
-  requestTimeoutMs?: any;
+}
+
+async function ledgerEthereumClientFactoryAsync() {
+  const ledgerConnection = await TransportWebHID.create();
+  const ledgerEthClient = new Eth(ledgerConnection);
+  return ledgerEthClient;
 }
 
 class LedgerProvider extends Web3ProviderEngine {
-  constructor(opts: ILedgerProviderOptions) {
+  constructor(opts) {
     super({
       pollingInterval: opts.pollingInterval,
     });
-    this.addProvider(
-      new LedgerSubprovider({
-        networkId: opts.chainId,
-        ledgerEthereumClientFactoryAsync: ledgerEthereumBrowserClientFactoryAsync,
-        accountFetchingConfigs: opts.accountFetchingConfigs,
-        baseDerivationPath: opts.baseDerivationPath,
-      })
-    );
-    this.addProvider(new CacheSubprovider());
-    this.addProvider(new RPCSubprovider(opts.rpcUrl, opts.requestTimeoutMs));
+    const ledgerWalletConfigs = {
+      networkId: opts.chainId,
+      ledgerEthereumClientFactoryAsync,
+    };
+
+    const ledgerSubprovider = new LedgerSubprovider(ledgerWalletConfigs);
+    this.addProvider(ledgerSubprovider);
+    this.addProvider(new RPCSubprovider(opts.rpcUrl));
 
     this.start();
   }

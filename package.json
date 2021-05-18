@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@0x/subproviders": "5.0.4",
+    "@ledgerhq/hw-transport-webhid": "^5.51.1",
     "web3-provider-engine": "15.0.4"
   },
   "devDependencies": {
